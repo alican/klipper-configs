@@ -1,0 +1,229 @@
+# This file contains pin mappings for the Creality "v4.2.7" board. To
+# use this config, during "make menuconfig" select the STM32F103 with
+# a "28KiB bootloader" and serial (on USART1 PA10/PA9) communication.
+
+# If you prefer a direct serial connection, in "make menuconfig"
+# select "Enable extra low-level configuration options" and select
+# serial (on USART3 PB11/PB10), which is broken out on the 10 pin IDC
+# cable used for the LCD module as follows:
+# 3: Tx, 4: Rx, 9: GND, 10: VCC
+
+# Flash this firmware by copying "out/klipper.bin" to a SD card and
+# turning on the printer with the card inserted. The firmware
+# filename must end in ".bin" and must not match the last filename
+# that was flashed.
+
+# See docs/Config_Reference.md for a description of parameters.
+[include macros.cfg]
+[include menu.cfg]
+
+
+[stepper_x]
+step_pin: PC2
+dir_pin: !PB9
+enable_pin: !PC3
+microsteps: 16
+rotation_distance: 40
+endstop_pin: ^PA5
+position_endstop: 0
+position_max: 220
+homing_speed: 50
+
+[stepper_y]
+step_pin: PB8
+dir_pin: !PB7
+enable_pin: !PC3
+microsteps: 16
+rotation_distance: 40
+endstop_pin: ^PA6
+position_endstop: 0
+position_max: 220
+homing_speed: 50
+
+[stepper_z]
+step_pin: PB6
+dir_pin: PB5
+enable_pin: !PC3
+microsteps: 16
+rotation_distance: 4
+#endstop_pin: ^PA7
+endstop_pin: probe:z_virtual_endstop
+position_min: -2.0
+position_max: 300
+
+[safe_z_home]
+home_xy_position: 100,100 # Change coordinates to the center of your print bed
+speed: 50
+z_hop: 10                 # Move up 10mm
+z_hop_speed: 5
+
+[mcu rpi]
+serial: /tmp/klipper_host_mcu
+
+[adxl345]
+cs_pin: rpi:None
+
+[resonance_tester]
+accel_chip: adxl345
+probe_points:
+    100, 100, 20  # an example
+
+[virtual_sdcard]
+path: ~/gcode_files
+
+[display_status]
+
+[bltouch]
+sensor_pin: ^PB1
+control_pin: PB0
+probe_with_touch_mode: true
+x_offset: 45
+y_offset: 7
+z_offset: 2.95
+samples: 1
+
+[extruder]
+max_extrude_only_distance: 100.0
+step_pin: PB4
+dir_pin: PB3
+enable_pin: !PC3
+microsteps: 16
+rotation_distance: 22.66
+# pressure_advance: 0.249 # PETG, NYLON
+#pressure_advance: 0.0775 # PLA cotton white
+pressure_advance: 0.0755 # PLA China
+#pressure_advance: 0.11
+nozzle_diameter: 0.400
+filament_diameter: 1.750
+heater_pin: PA1
+sensor_type: EPCOS 100K B57560G104F
+sensor_pin: PC5
+control: pid
+pid_Kp: 21.527
+pid_Ki: 1.063
+pid_Kd: 108.982
+min_temp: 0
+max_temp: 270
+
+[heater_bed]
+heater_pin: PA2
+sensor_type: EPCOS 100K B57560G104F
+sensor_pin: PC4
+control: pid
+pid_Kp: 54.027
+pid_Ki: 0.770
+pid_Kd: 948.182
+min_temp: 0
+max_temp: 130
+
+[fan]
+pin: PA0
+cycle_time: 0.001
+kick_start_time: 0.500
+
+[mcu]
+serial: /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
+restart_method: command
+
+[printer]
+kinematics: cartesian
+max_velocity: 300
+max_accel: 1000
+max_z_velocity: 5
+max_z_accel: 100
+
+[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 45,7
+mesh_max: 219,219
+probe_count: 3,3
+mesh_pps: 2,3
+algorithm: bicubic
+bicubic_tension: 0.2
+fade_start: 1
+fade_end: 5
+
+[gcode_arcs]
+resolution: 1.0
+
+
+[pause_resume]
+
+
+
+[display] # RET6 12864 LCD
+lcd_type: st7920
+cs_pin: PB12
+sclk_pin: PB13
+sid_pin: PB15
+encoder_pins: ^PB14, ^PB10
+click_pin: ^!PB2
+
+[output_pin BEEPER_Pin]
+pin: PC6
+pwm: True
+value: 0
+shutdown_value: 0
+cycle_time: 0.001
+scale: 1
+
+[gcode_macro M300]
+gcode:
+    {% set S = params.S|default(1000)|int %} ; S sets the tone frequency
+    {% set P = params.P|default(100)|int %} ; P sets the tone duration
+    {% set L = 0.5 %} ; L varies the PWM on time, close to 0 or 1 the tone gets a bit quieter. 0.5 is a symmetric waveform
+    {% if S <= 0 %} ; dont divide through zero
+    {% set F = 1 %}
+    {% set L = 0 %}
+    {% elif S >= 10000 %} ;max frequency set to 10kHz
+    {% set F = 0 %}
+    {% else %}
+    {% set F = 1/S %} ;convert frequency to seconds
+    {% endif %}
+    SET_PIN PIN=BEEPER_Pin VALUE={L} CYCLE_TIME={F} ;Play tone
+    G4 P{P} ;tone duration
+    SET_PIN PIN=BEEPER_Pin VALUE=0
+
+#*# <---------------------- SAVE_CONFIG ---------------------->
+#*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.
+#*#
+#*# [extruder]
+#*#
+#*# [heater_bed]
+#*#
+#*# [bltouch]
+#*#
+#*# [bed_mesh default]
+#*# version = 1
+#*# points =
+#*# 	  -0.092500, -0.085000, -0.131250
+#*# 	  -0.025000, 0.055000, -0.020000
+#*# 	  -0.031250, 0.090000, 0.116250
+#*# tension = 0.2
+#*# min_x = 45.0
+#*# algo = bicubic
+#*# y_count = 3
+#*# mesh_y_pps = 3
+#*# min_y = 7.0
+#*# x_count = 3
+#*# max_y = 219.0
+#*# mesh_x_pps = 2
+#*# max_x = 219.0
+#*#
+#*# [bed_mesh 60.0]
+#*# version = 1
+#*# points =
+#*# 	  -0.092500, -0.085000, -0.131250
+#*# 	  -0.025000, 0.055000, -0.020000
+#*# 	  -0.031250, 0.090000, 0.116250
+#*# tension = 0.2
+#*# min_x = 45.0
+#*# algo = bicubic
+#*# y_count = 3
+#*# mesh_y_pps = 3
+#*# min_y = 7.0
+#*# x_count = 3
+#*# max_y = 219.0
+#*# mesh_x_pps = 2
+#*# max_x = 219.0
